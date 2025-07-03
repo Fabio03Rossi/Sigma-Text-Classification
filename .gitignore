@@ -482,3 +482,14 @@
 /.ipynb_checkpoints/Untitled-checkpoint.ipynb
 /bge_auto_opt_O4/vocab.txt
 /checkpoints/checkpoint-5000/vocab.txt
+/bge_auto_opt_O4/
+/checkpoints/
+/closing_notes_output/
+/docs/
+/hello/
+/inf_models/
+/my_awesome_model/
+/runs/
+/sentencepiece/
+/textual_output/
+/tmp_trainer/
