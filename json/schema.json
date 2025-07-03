@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "selection": {
+      "type": "string",
+      "enum": ["UNK", "NV", "NF", "CT", "NE", "CASSETTE", "SHUTTER"]
+    }
+  },
+  "required": ["selection"]
+}
