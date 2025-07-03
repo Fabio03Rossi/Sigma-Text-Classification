@@ -19,6 +19,7 @@ Nella prima cella definiamo la variabile d'ambiente per poter utilizzare la GPU 
 ```python
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.system("pip install setfit datasets sentence-transformers pandas numpy")
 ```
 
 Come primo step si vanno a importare i 3 dataset necessari a completare l'operazione di training.
@@ -44,6 +45,7 @@ test_dataset = Dataset.from_pandas(df_test.iloc[:, [0,1,2,3,4,5, 32, 49]])
 
 features = dataset.column_names
 features.remove("Closing Note")
+features
 ```
 
 Eseguiamo ulteriori elaborazioni sui nostri dataset correnti, in cui rimappiamo le colonne delle singole label in una singola colonna `"labels"` contenente un vettore delle singole selezioni in formato binario.
@@ -58,7 +60,6 @@ validation_dataset = validation_dataset.map(lambda entry: {"text": entry["Closin
 test_dataset = test_dataset.map(lambda entry: {"labels": [entry[label] for label in features]})
 test_dataset = test_dataset.map(lambda entry: {"text": entry["Closing Note"]})
 ```
-
 
 ```python
 dictionary = {"text": dataset["Closing Note"], "labels": dataset['labels']}
@@ -85,6 +86,8 @@ Date le label e impostando il parametro `multi_label = True`, possiamo decidere 
 from setfit import get_templated_dataset
 
 train_dataset = get_templated_dataset(train_dataset, candidate_labels=features, sample_size=5, label_column="labels", multi_label=True, template="Il problema è del {}")
+
+train_dataset
 ```
 
 ## Fine-Tuning
@@ -192,14 +195,23 @@ def export_as_excel(filename, preds, bool):
     preds = map(lambda i: i.numpy().astype(numpy.int64).tolist(), preds)
     df_out = Dataset.to_pandas(test_dataset) if bool else Dataset.to_pandas(validation_dataset)
 
+    cassette, ct, ne, nf, nv, shutter = [], [], [], [], [], []
+
     for k in preds:
-        df_out = pd.concat([df_out, pd.DataFrame({
-                    "CASSETTE Model": int(k[0]),
-                    "CT Model": int(k[1]),
-                    "NE Model": int(k[2]),
-                    "NF Model": int(k[3]),
-                    "NV Model": int(k[4]),
-                    "SHUTTER Model": int(k[5])
+        cassette.append(int(k[0]))
+        ct.append(int(k[1]))
+        ne.append(int(k[2]))
+        nf.append(int(k[3]))
+        nv.append(int(k[4]))
+        shutter.append(int(k[5]))
+
+    df_out = pd.concat([df_out, pd.DataFrame({
+                    "CASSETTE Model": cassette,
+                    "CT Model": ct,
+                    "NE Model": ne,
+                    "NF Model": nf,
+                    "NV Model": nv,
+                    "SHUTTER Model": shutter
         })], axis=1)
 
     df_out.to_excel(filename, index=False)
