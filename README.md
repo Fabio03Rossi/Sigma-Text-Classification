@@ -18,8 +18,6 @@ Nella prima cella definiamo la variabile d'ambiente per poter utilizzare la GPU 
 
 ```python
 import os
-from sklearn.metrics import accuracy_score
-
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 ```
 
@@ -46,9 +44,7 @@ test_dataset = Dataset.from_pandas(df_test.iloc[:, [0,1,2,3,4,5, 32, 49]])
 
 features = dataset.column_names
 features.remove("Closing Note")
-features
 ```
-
 
 Eseguiamo ulteriori elaborazioni sui nostri dataset correnti, in cui rimappiamo le colonne delle singole label in una singola colonna `"labels"` contenente un vettore delle singole selezioni in formato binario.
 
@@ -105,7 +101,7 @@ Si notano delle parametrizzazioni di base applicate tra cui:
 ```python
 import torch
 from setfit import SetFitModel
-import os
+
 os.environ["WANDB_DISABLED"] = "true"
 
 def model_init(params):
@@ -149,7 +145,6 @@ args = TrainingArguments(
 )
 ```
 
-
 Si inizializza poi il `Trainer` specificando i dataset di training e validation, gli argomenti e la funzione di inizializzazione del modello precedentemente definiti, avviando lo step di allenamento.
 
 
@@ -166,7 +161,6 @@ trainer = Trainer(
 
 trainer.train()
 ```
-    
 
 Si verifica l'accuratezza generale del modello allenato con una semplice metrica, contro il set di validation.
 
@@ -187,6 +181,7 @@ model.save_pretrained("models/DummyModel") # Path del modello
 
 ```python
 import numpy
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import multilabel_confusion_matrix
