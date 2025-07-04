@@ -1,0 +1,14 @@
+/.gradio/
+/chroma_db/
+/docs/
+/json/
+/models/
+/rag_few_shot_classification/general.txt
+/rag_few_shot_classification/general1.txt
+/bge-m3-zeroshot-v2.0.txt
+/deberta-small-long-nli.txt
+/device_area.py
+/gliclass-modern-large-v2.0-init.txt
+/log.txt
+/logALT.txt
+/xlm-roberta-large-it-mnli.txt
