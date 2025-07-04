@@ -115,7 +115,8 @@ def model_init() -> SetFitModel:
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 os.environ["WANDB_DISABLED"] = "true"
 
-os.system("pip install setfit datasets sentence-transformers pandas numpy")
+os.system("pip3 install setfit datasets sentence-transformers pandas numpy")
+os.system("pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118")
 
 df_training: DataFrame = pd.read_excel("docs/training_docs/DummyClosingNotes-training.xlsx")  # Path del file Excel
 df_validation: DataFrame = pd.read_excel("docs/training_docs/DummyClosingNotes-validation.xlsx")

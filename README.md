@@ -12,7 +12,19 @@ L'approccio utilizzato per la risoluzione consiste nel [**Few-Shot Learning**](h
 Utilizziamo diverse librerie di HuggingFace come [**Sentence-Transformers**](https://sbert.net/) e [**SetFit**](https://huggingface.co/docs/setfit/main/en/index) per la definizione e l'allenamento del modello IA, insieme a [**Datasets**](https://huggingface.co/docs/hub/en/datasets) per la manipolazione dei dati necessari agli step di training, validation e test.
 
 
-Nella prima cella definiamo la variabile d'ambiente per poter utilizzare la GPU durante l'allenamento.
+Nella prima cella si installano tutti i pacchetti Python richiesti per eseguire il programma e le variabili d'ambiente per poter utilizzare la GPU durante l'allenamento.
+
+_Nota: alcuni pacchetti possono variare a causa di aggiornamenti non compatibili o modello di scheda video.
+Per buona misura aggiornare i driver della GPU NVIDIA, e prestare attenzione alla versione di CUDA in uso istallando la corretta versione di [PyTorch](https://pytorch.org/), e seguendo le istruzioni fornite._
+
+_Versioni correnti:_
+*     python: 3.12
+*     setfit: 1.1.2
+*     sentence-transformers: 3.4.0
+*     datasets: 3.2.0
+*     numpy: 1.26.4
+*     pandas: 2.3.0
+*     torch: 2.7.1+cu118
 
 
 
@@ -21,7 +33,8 @@ import os
 from pandas.core.interchange.dataframe_protocol import DataFrame
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-os.system("pip install setfit datasets sentence-transformers pandas numpy")
+os.system("pip3 install setfit datasets sentence-transformers pandas numpy")
+os.system("pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118")
 ```
 
 Come primo step si vanno a importare i 3 dataset necessari a completare l'operazione di training.
