@@ -1,38 +1,34 @@
-# SetFit Few-Shot Classification
-
-In questo notebook vengono mostrati i segmenti di codice e i procedimenti eseguiti per effettuare l'allenamento e l'inferenza del modello di classificazione.
-
-L'obiettivo è quello di classificare le note di chiusura degli interventi dei tecnici in base alle aree di guasto possibili della macchina. Queste comprendono: **CASSETTE, CT, NE, NF, NV e SHUTTER**.
-Il sistema deve poter categorizzare questi elementi testuali in maniera più o meno affidabile attraverso IA, includendo anche più di un'area per selezione.
-
-La task che quindi dobbiamo eseguire si ricongiunge a una classificazione di testo multi-label.
-
-L'approccio utilizzato per la risoluzione consiste nel [**Few-Shot Learning**](https://www.ibm.com/think/topics/few-shot-learning), dove un modello IA di embedding viene allenato su un numero N di esempi reali per ogni singola label. Richiede più tempo e risorse hardware ma permette di ottenere risultati migliori in ambienti con pochi dati di allenamento e soprattutto categorizzazioni complesse come nel nostro caso.
-
-Utilizziamo diverse librerie di HuggingFace come [**Sentence-Transformers**](https://sbert.net/) e [**SetFit**](https://huggingface.co/docs/setfit/main/en/index) per la definizione e l'allenamento del modello IA, insieme a [**Datasets**](https://huggingface.co/docs/hub/en/datasets) per la manipolazione dei dati necessari agli step di training, validation e test.
-
-
-Nella prima cella definiamo la variabile d'ambiente per poter utilizzare la GPU durante l'allenamento.
-
-
-
-```python
+#%% md
+# # SetFit Few-Shot Classification
+# 
+# In questo notebook vengono mostrati i segmenti di codice e i procedimenti eseguiti per effettuare l'allenamento e l'inferenza del modello di classificazione.
+# 
+# L'obiettivo è quello di classificare le note di chiusura degli interventi dei tecnici in base alle aree di guasto possibili della macchina. Queste comprendono: **CASSETTE, CT, NE, NF, NV e SHUTTER**.
+# Il sistema deve poter categorizzare questi elementi testuali in maniera più o meno affidabile attraverso IA, includendo anche più di un'area per selezione.
+# 
+# La task che quindi dobbiamo eseguire si ricongiunge a una classificazione di testo multi-label.
+# 
+# L'approccio utilizzato per la risoluzione consiste nel [**Few-Shot Learning**](https://www.ibm.com/think/topics/few-shot-learning), dove un modello IA di embedding viene allenato su un numero N di esempi reali per ogni singola label. Richiede più tempo e risorse hardware ma permette di ottenere risultati migliori in ambienti con pochi dati di allenamento e soprattutto categorizzazioni complesse come nel nostro caso.
+# 
+# Utilizziamo diverse librerie di HuggingFace come [**Sentence-Transformers**](https://sbert.net/) e [**SetFit**](https://huggingface.co/docs/setfit/main/en/index) per la definizione e l'allenamento del modello IA, insieme a [**Datasets**](https://huggingface.co/docs/hub/en/datasets) per la manipolazione dei dati necessari agli step di training, validation e test.
+# 
+# 
+# Nella prima cella definiamo la variabile d'ambiente per poter utilizzare la GPU durante l'allenamento.
+# 
+#%%
 import os
 from pandas.core.interchange.dataframe_protocol import DataFrame
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 os.system("pip install setfit datasets sentence-transformers pandas numpy")
-```
-
-Come primo step si vanno a importare i 3 dataset necessari a completare l'operazione di training.
-Consistono nel dataset di training che presenta una varietà di dati labelizzati su cui il modello eseguirà l'allenamento, il dataset di validation che contiene altri elementi labelizzati e conosciuti per validare l'accuratezza del modello in casi controllati, e infine abbiamo il dataset di test contenente una grande collezione di note di chiusura senza labelizzazioni revisionate in cui il modello verrà messo contro le selezioni dei tecnici.
-
-I dataset sono estratti in `DataFrame` pandas da dei file Excel, e successivamente convertiti in `Dataset` filtrando le colonne ritenute non rilevanti per l'allenamento.
-
-Fare attenzione ai nomi delle colonne delle label da valutare, devono necessariamente corrispondere a `"{label} ground-truth"` per evitare problematiche.
-
-
-```python
+#%% md
+# Come primo step si vanno a importare i 3 dataset necessari a completare l'operazione di training.
+# Consistono nel dataset di training che presenta una varietà di dati labelizzati su cui il modello eseguirà l'allenamento, il dataset di validation che contiene altri elementi labelizzati e conosciuti per validare l'accuratezza del modello in casi controllati, e infine abbiamo il dataset di test contenente una grande collezione di note di chiusura senza labelizzazioni revisionate in cui il modello verrà messo contro le selezioni dei tecnici.
+# 
+# I dataset sono estratti in `DataFrame` pandas da dei file Excel, e successivamente convertiti in `Dataset` filtrando le colonne ritenute non rilevanti per l'allenamento.
+# 
+# Fare attenzione ai nomi delle colonne delle label da valutare, devono necessariamente corrispondere a `"{label} ground-truth"` per evitare problematiche.
+#%%
 import pandas as pd
 from datasets import Dataset
 
@@ -47,60 +43,59 @@ test_dataset: Dataset = Dataset.from_pandas(df_test.iloc[:, [0,1,2,3,4,5, 32, 49
 
 features = train_dataset.column_names
 features.remove("Closing Note")
-```
-
-
-
-Eseguiamo ulteriori elaborazioni sui nostri dataset correnti, in cui rimappiamo le colonne delle singole label in una singola colonna `"labels"` contenente un vettore delle singole selezioni in formato binario.
-
-Successivamente vengono rimosse tutte le righe in cui le note di chiusura risultano vuote.
-
-
-```python
+features
+#%% md
+# Eseguiamo ulteriori elaborazioni sui nostri dataset correnti, in cui rimappiamo le colonne delle singole label in una singola colonna `"labels"` contenente un vettore delle singole selezioni in formato binario.
+# 
+# Successivamente vengono rimosse tutte le righe in cui le note di chiusura risultano vuote.
+#%%
 def clean_dataset(ds):
     ds = ds.map(lambda entry: {"labels": [entry[label] for label in features]})
     ds = ds.map(lambda entry: {"text": entry["Closing Note"]})
     ds = Dataset.from_pandas(ds.to_pandas().dropna())
     ds = Dataset.from_pandas(ds.to_pandas().replace(r'^\s*$', "Empty", regex=True))
     return ds
-```
-
-
-```python
+#%%
+train_dataset
+#%%
+validation_dataset
+#%%
+test_dataset
+#%%
 train_dataset = clean_dataset(train_dataset)
 
 validation_dataset = clean_dataset(validation_dataset)
 
 test_dataset = clean_dataset(test_dataset)
-```
-
-
-_`get_templated_dataset`_ è un metodo di SetFit che permette di generare dati sintetici a seconda delle necessità.
-Date le label e impostando il parametro `multi_label = True`, possiamo decidere un numero di esempi sintetici che verranno aggiunti per label seguendo un template uguale per tutte. Risulta essere metodologia semplice, ma aiuta comunque per la classificazione.
-
-
-```python
+#%%
+train_dataset
+#%%
+validation_dataset
+#%%
+test_dataset
+#%% md
+# _`get_templated_dataset`_ è un metodo di SetFit che permette di generare dati sintetici a seconda delle necessità.
+# Date le label e impostando il parametro `multi_label = True`, possiamo decidere un numero di esempi sintetici che verranno aggiunti per label seguendo un template uguale per tutte. Risulta essere metodologia semplice, ma aiuta comunque per la classificazione.
+#%%
 from setfit import get_templated_dataset
 
 train_dataset = get_templated_dataset(train_dataset, candidate_labels=features, sample_size=5, label_column="labels", multi_label=True, template="Il problema è del {}")
-```
 
-
-## Fine-Tuning
-
-Si definisce una funzione per l'inizializzazione del modello che verrà usato dal `Trainer`.
-
-In questo caso si sta usando [BAAI/bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5).
-
-Vi è anche la possibilità di passare direttamente la variabile del modello, ma la funzione è vantaggiosa per motivi di versatilità, e la possibilità di implementare alcune funzionalità aggiuntive che la richiedono.
-
-Si notano delle parametrizzazioni di base applicate tra cui:
-    <p>- la temperatura (rappresenta la creatività del modello ed è impostata a 0);</p>
-    <p>- il numero e la lista di label con cui deve rispondere;</p>
-    <p>- la strategia di selezione della label (nel nostro caso `"multi-output"`, ma anche `"one-vs-rest"`...).</p>
-
-
-```python
+train_dataset
+#%% md
+# ## Fine-Tuning
+# 
+# Si definisce una funzione per l'inizializzazione del modello che verrà usato dal `Trainer`.
+# 
+# In questo caso si sta usando [BAAI/bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5).
+# 
+# Vi è anche la possibilità di passare direttamente la variabile del modello, ma la funzione è vantaggiosa per motivi di versatilità, e la possibilità di implementare alcune funzionalità aggiuntive che la richiedono.
+# 
+# Si notano delle parametrizzazioni di base applicate tra cui:
+#     <p>- la temperatura (rappresenta la creatività del modello ed è impostata a 0);</p>
+#     <p>- il numero e la lista di label con cui deve rispondere;</p>
+#     <p>- la strategia di selezione della label (nel nostro caso `"multi-output"`, ma anche `"one-vs-rest"`...).</p>
+#%%
 import torch
 from setfit import SetFitModel
 
@@ -110,21 +105,18 @@ def model_init() -> SetFitModel:
     params = {"device": torch.device("cuda"), 'out_features': 6, 'temperature': 0}
     return SetFitModel.from_pretrained("BAAI/bge-small-en-v1.5",
                                        multi_target_strategy="multi-output", params=params, labels=features)
-```
-
-Successivamente si specificano nel dettaglio i parametri a cui il `Trainer` sarà sottoposto, questo significa che ogni elemento che si definisce di seguito riguarderà la fase di allenamento e non sarà quindi necessario tenerne traccia in qualsiasi altro utlizzo post-allenamento.
-
-Qui è anche possibile specificare dei parametri per il debugging.
-
-Gli elementi che più interessano in questo caso sono: <br>
-    <p>- **`body_learning_rate`** (definisce "quanto" il modello dovrà imparare a ogni step dell'allenamento. Se troppo alto rischia di causare più facilmente "over-training");</p>
-    <p>- **`num_epochs`** (rappresenta il numero di volte che il dataset viene attraversato nella sua interezza);</p>
-    <p>- **`batch_size`** (il numero di sample processato per ogni step, un "chunk");</p>
-    <p>- **`warmup_proportion`** (influisce sul `learning_rate` nei primi step di allenamento, mantenendo un basso valore prima di passare al valore definito. Dovrebbe aiutare ad aumentare l'attenzione del modello);</p>
-    <p>- **`sampling_strategy`** (riguarda il bilanciamento del numero di comparazioni per label. `"unique"` in questo caso non bilancia il peso delle label, garantendo comunque che vengano effettuate tutte le comparazioni senza duplicazioni).</p>
-
-
-```python
+#%% md
+# Successivamente si specificano nel dettaglio i parametri a cui il `Trainer` sarà sottoposto, questo significa che ogni elemento che si definisce di seguito riguarderà la fase di allenamento e non sarà quindi necessario tenerne traccia in qualsiasi altro utlizzo post-allenamento.
+# 
+# Qui è anche possibile specificare dei parametri per il debugging.
+# 
+# Gli elementi che più interessano in questo caso sono: <br>
+#     <p>- **`body_learning_rate`** (definisce "quanto" il modello dovrà imparare a ogni step dell'allenamento. Se troppo alto rischia di causare più facilmente "over-training");</p>
+#     <p>- **`num_epochs`** (rappresenta il numero di volte che il dataset viene attraversato nella sua interezza);</p>
+#     <p>- **`batch_size`** (il numero di sample processato per ogni step, un "chunk");</p>
+#     <p>- **`warmup_proportion`** (influisce sul `learning_rate` nei primi step di allenamento, mantenendo un basso valore prima di passare al valore definito. Dovrebbe aiutare ad aumentare l'attenzione del modello);</p>
+#     <p>- **`sampling_strategy`** (riguarda il bilanciamento del numero di comparazioni per label. `"unique"` in questo caso non bilancia il peso delle label, garantendo comunque che vengano effettuate tutte le comparazioni senza duplicazioni).</p>
+#%%
 from setfit import TrainingArguments
 
 args = TrainingArguments(
@@ -145,13 +137,9 @@ args = TrainingArguments(
     run_name="finetune-setfit",
     load_best_model_at_end=True
 )
-```
-
-
-Si inizializza poi il `Trainer` specificando i dataset di training e validation, gli argomenti e la funzione di inizializzazione del modello precedentemente definiti, avviando lo step di allenamento.
-
-
-```python
+#%% md
+# Si inizializza poi il `Trainer` specificando i dataset di training e validation, gli argomenti e la funzione di inizializzazione del modello precedentemente definiti, avviando lo step di allenamento.
+#%%
 from setfit import Trainer
 
 trainer = Trainer(
@@ -163,26 +151,17 @@ trainer = Trainer(
 )
 
 trainer.train()
-```
-
-Si verifica l'accuratezza generale del modello allenato con una semplice metrica, contro il set di validation.
-
-
-```python
+#%% md
+# Si verifica l'accuratezza generale del modello allenato con una semplice metrica, contro il set di validation.
+#%%
 metrics = trainer.evaluate()
 print(metrics)
-```
-
-A seguito del completamento del Fine-Tuning, si salva il modello su disco in modo tale da poter farne riuso.
-
-
-```python
+#%% md
+# A seguito del completamento del Fine-Tuning, si salva il modello su disco in modo tale da poter farne riuso.
+#%%
 model = trainer.model
 model.save_pretrained("models/DummyModel") # Path del modello
-```
-
-
-```python
+#%%
 import numpy
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
@@ -280,37 +259,28 @@ def print_results(w_dataset, preds, pred_proba):
 
     print("TN, FP, FN, TP \n")
     print(str(confusion_matrix(w_dataset, preds)) + '\n')
-```
-
-## Inferenza
-
-Quando si vuole utilizzare un modello esterno già presente su disco ad esempio, basta richiamare il metodo _`SetFitModel.from_pretrained`_ con il path e nome del modello.
-
-Per eseguire una predizione basta richiamare il metodo predict fornendo la lista di stringhe che si devono testare. In questo caso utilizziamo la colonna `"text"` del dataset di testing che contiene tutte le note dei tecnici.
-
-Si può anche utilizzare il metodo _`predict_proba`_ che fornisce le percentuali di confidenza sulle scelte che il modello ha preso per le predizioni.
-
-
-```python
+#%% md
+# ## Inferenza
+# 
+# Quando si vuole utilizzare un modello esterno già presente su disco ad esempio, basta richiamare il metodo _`SetFitModel.from_pretrained`_ con il path e nome del modello.
+# 
+# Per eseguire una predizione basta richiamare il metodo predict fornendo la lista di stringhe che si devono testare. In questo caso utilizziamo la colonna `"text"` del dataset di testing che contiene tutte le note dei tecnici.
+# 
+# Si può anche utilizzare il metodo _`predict_proba`_ che fornisce le percentuali di confidenza sulle scelte che il modello ha preso per le predizioni.
+#%%
 model = SetFitModel.from_pretrained("models/DummyModel")
 
 preds = model.predict(test_dataset['text'])
 pred_proba = model.predict_proba(test_dataset['text'])
-```
-
-Si salvano le predizioni all'interno di un nuovo file Excel per una più facile consultazione e analisi.
-
-
-```python
+#%% md
+# Si salvano le predizioni all'interno di un nuovo file Excel per una più facile consultazione e analisi.
+#%%
 export_as_excel('closing_notes_output/ClosingNotesResults.xlsx', preds, test_dataset)
-```
-
-Infine si va a stampare in output ogni singola predizione e le sue probabilità, accodando ai risultati svariati valori di accuratezza tra cui la _balanced accuracy_ di ogni label e la _subset accuracy_ del totale.
-
-Si forniscono anche le informazioni di training relative al modello allenato in questo caso, per poi fornire un completo report di classificazione tramite **sklearn**, approfondendo nel dettaglio altre metriche di valutazione che potrebbero risultare rilevanti per ulteriori procedure di fine-tuning.
-
-
-```python
+#%% md
+# Infine si va a stampare in output ogni singola predizione e le sue probabilità, accodando ai risultati svariati valori di accuratezza tra cui la _balanced accuracy_ di ogni label e la _subset accuracy_ del totale.
+# 
+# Si forniscono anche le informazioni di training relative al modello allenato in questo caso, per poi fornire un completo report di classificazione tramite **sklearn**, approfondendo nel dettaglio altre metriche di valutazione che potrebbero risultare rilevanti per ulteriori procedure di fine-tuning.
+#%%
 print_results(test_dataset, preds, pred_proba)
 
 print("body_learning_rate: " + str(args.body_learning_rate))
@@ -319,4 +289,5 @@ print("batch_size: " + str(args.batch_size))
 print("warmup_proportion: " + str(args.warmup_proportion))
 
 print(classification_report(test_dataset['labels'], preds, target_names=features, zero_division=0))
-```
+#%%
+preds
