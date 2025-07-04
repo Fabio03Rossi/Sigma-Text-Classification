@@ -191,10 +191,9 @@ from sklearn.metrics import multilabel_confusion_matrix
 
 ## Funzioni di utilità
 
-def export_as_excel(filename, preds, bool):
+def export_as_excel(filename, preds, test_dataset):
     preds = map(lambda i: i.numpy().astype(numpy.int64).tolist(), preds)
-    df_out = Dataset.to_pandas(test_dataset) if bool else Dataset.to_pandas(validation_dataset)
-
+    df_out = Dataset.to_pandas(test_dataset)
     cassette, ct, ne, nf, nv, shutter = [], [], [], [], [], []
 
     for k in preds:
@@ -296,7 +295,7 @@ Si salvano le predizioni all'interno di un nuovo file Excel per una più facile 
 
 
 ```python
-export_as_excel('closing_notes_output/ClosingNotesResults.xlsx', preds, False)
+export_as_excel('closing_notes_output/ClosingNotesResults.xlsx', preds, test_dataset)
 ```
 
 Infine si va a stampare in output ogni singola predizione e le sue probabilità, accodando ai risultati svariati valori di accuratezza tra cui la _balanced accuracy_ di ogni label e la _subset accuracy_ del totale.
