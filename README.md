@@ -1,8 +1,10 @@
 # Zero-Shot Text Classification
 
-Una delle metodologie affrontate durante la fase di sperimentazione.
+Riprendendo la task definita già nell'approccio SetFit, si definisce una metodologia di classificazione delle 6 aree di guasto attraverso pipeline di classificazione di **Transformers**.
 
-Utilizza la libreria Transformers in modo da poter instanziare una pipeline definita per questa task.
+Con questa metodologia non si vanno a costruire precedentemente dei dataset, ma la task di classificazione è operativa fin da subito. Si utilizza la libreria **Transformers** per instanziare una pipeline definita per questa task, e attraverso l'uso di modelli di piccole dimensioni si esegue una classificazione di testo senza esempi impiegati.
+
+Dato un input infatti il modello si porrà una "ipotesi" la cui risposta corrisponderà alla classificazione della label. Questa ipotesi può essere personalizzata.
 
 
 ```
@@ -46,12 +48,12 @@ areas = CT + NE + NF + NV + CASSETTE + SHUTTER
 
 Qui di seguito si definiscono quelle che sono le funzioni per ogni operazione che si andrà a svolgere.
 
-classify_text è la funzione che si occupa di effettuare la vera e propria classificazione ed il parsing immediato del risultato ottenuto.
+_`classify_text`_ è la funzione che si occupa di effettuare la vera e propria classificazione ed il parsing immediato del risultato ottenuto. Prende come parametro opzionale il valore di "ipotesi" che il modello userà per la classificazione, che se correttamente definito può portare a risultati migliori.
 
-parse_higher_result invece estrapola il risultato con confidenza maggiore, e tutti i risultati la cui confidenza è maggiore di quella definita precedentemente.
+_`parse_higher_result`_ invece estrapola il risultato con confidenza maggiore, e tutti i risultati la cui confidenza è maggiore di quella definita precedentemente.
 Delimita inoltre la classificazione alle sole aree base mappando la label riconosciuta con la rispettiva lista di appartenenza.
 
-elaborate_prompt richiama le funzioni descritte ed effettua il parsing del risultato in formato JSON.
+_`elaborate_prompt`_ richiama le funzioni descritte ed effettua il parsing del risultato in formato JSON.
 
 
 ```
@@ -96,7 +98,7 @@ def elaborate_prompt(text):
     return result
 ```
 
-Per l'inferenza si definisce l'oggetto classificatore attraverso la pipeline di Transformers.
+Per l'inferenza si definisce l'oggetto classificatore attraverso la pipeline di **Transformers**.
 Si specifica la task che in questo caso è zero-shot-classification, e altri parametri come il modello e la specifica dell'utilizzo della GPU.
 
 
