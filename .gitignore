@@ -12,3 +12,4 @@
 /log.txt
 /logALT.txt
 /xlm-roberta-large-it-mnli.txt
+/unit_tests.py
