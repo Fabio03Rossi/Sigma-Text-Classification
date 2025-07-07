@@ -1,6 +1,6 @@
 # Classificazione di testo con LLM e LangChain
 
-Riprendendo la task definita già nell'approccio SetFit, si definisce una metodologia di classificazione delle 6 aree di guasto attraverso inferenza di LLM e l'uso di Prompt Engineering.
+Riprendendo la task definita già nell'approccio SetFit, si definisce una metodologia di classificazione delle 6 aree di guasto attraverso inferenza di **LLM** e l'uso di **Prompt Engineering**.
 
 Con questa metodologia non si vanno a costruire precedentemente dei dataset, ma la task di classificazione è operativa fin da subito. Attraverso l'uso diretto di LLM Open Source si effettua l'inferenza manipolando il prompt affinchè il modello risponda alle esigenze da soddisfare.
 
