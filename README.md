@@ -10,6 +10,7 @@ Un approccio anche più semplice da applicare ma con risultati non ottimali in t
 
 Il primo step è inizializzare il modello (in questo caso [HuggingFaceTB/SmolLM2-1.7B-Instruct](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct)), definirne la task di generazione di testo, e poi aggiungere altri parametri aggiuntivi.
 
+_Nota_: in questo caso si fa uso della classe _`HuggingFacePipeline`_ per ottenere la pipeline del modello, ma nelle sperimentazioni si è usata la classe _`LlamaCpp`_ con LLM quantizzati scaricati localmente.
 
 ```python
 from langchain_huggingface import HuggingFacePipeline
